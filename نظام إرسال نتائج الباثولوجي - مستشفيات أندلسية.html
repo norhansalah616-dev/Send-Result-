@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مستشفيات أندلسية | نظام إرسال تقارير الباثولوجي والنتائج الطبية عبر واتساب</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cairo & Tajawal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                        tajawal: ['Tajawal', 'sans-serif'],
+                    },
+                    colors: {
+                        andalusia: {
+                            50: '#ecfeff',
+                            100: '#cffafe',
+                            200: '#a5f3fc',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490',
+                            800: '#155e75',
+                            900: '#164e63',
+                            navy: '#0b2545',
+                            gold: '#c59b27'
+                        },
+                        whatsapp: {
+                            light: '#25D366',
+                            dark: '#075E54',
+                            teal: '#128C7E',
+                            bg: '#ECE5DD',
+                            bubble: '#DCF8C6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f1f5f9;
+        }
+        /* WhatsApp Chat Background Pattern */
+        .wa-bg {
+            background-color: #e5ddd5;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px), radial-gradient(#cbd5e1 1px, #e5ddd5 1px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .step-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col bg-slate-100">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 left-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Top Navigation Bar - Andalusia Hospitals Official Theme -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Brand -->
+            <div class="flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-andalusia-800 via-andalusia-700 to-andalusia-600 flex items-center justify-center text-white shadow-md shadow-andalusia-700/25 border border-andalusia-500/20">
+                    <i class="fa-solid fa-hospital text-2xl text-cyan-200"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-black text-xl text-andalusia-navy tracking-tight leading-none" id="headerHospitalName">مستشفيات أندلسية</h1>
+                        <span class="bg-cyan-50 text-andalusia-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-cyan-200 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-cyan-600 animate-pulse"></span> قسم علم الأمراض (Pathology)
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium mt-1">بوابة إرسال تقارير الأنسجة والتحاليل الطبية لخدمة المرضى عبر واتساب</p>
+                </div>
+            </div>
+
+            <!-- Quick Stats & Actions -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="fillPathologyDemo()" class="text-xs sm:text-sm bg-cyan-50 hover:bg-cyan-100 text-andalusia-800 border border-cyan-200 font-bold py-2 px-3 rounded-xl transition flex items-center gap-1.5" title="ملء بيانات حالة باثولوجي نموذجية">
+                    <i class="fa-solid fa-microscope text-andalusia-600"></i>
+                    <span class="hidden md:inline">عينة باثولوجي تجريبية</span>
+                </button>
+
+                <button onclick="openBatchModal()" class="text-xs sm:text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-list-check text-slate-600"></i>
+                    <span>قائمة الانتظار</span>
+                    <span id="queueCountBadge" class="bg-andalusia-700 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">3</span>
+                </button>
+
+                <button onclick="openSettingsModal()" class="text-xs sm:text-sm bg-andalusia-navy hover:bg-slate-900 text-white font-semibold py-2 px-3.5 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span class="hidden sm:inline">إعدادات المستشفى والـ API</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Hospital Info Banner / Status Bar -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-cyan-50 text-andalusia-700 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-file-waveform"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">الفحص المعتمد النشط</p>
+                    <p class="text-sm font-bold text-andalusia-navy" id="statDefaultTest">تحليل باثولوجي (عينة أنسجة)</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">التقارير المرسلة للمرضى</p>
+                    <p class="text-xl font-bold text-slate-800" id="statTotalSent">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-file-pdf"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">حالة مرفق النتيجة (PDF)</p>
+                    <p class="text-xs font-bold text-slate-700" id="statPdfStatus">جاهز للإرفاق المباشر</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-user-clock"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">تقارير باثولوجي بالانتظار</p>
+                    <p class="text-xl font-bold text-slate-800" id="statPendingCount">3 حالات</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Core Workflow & Live WhatsApp Simulator Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- Right Column: Interactive 4-Step Flow (7 Cols) -->
+            <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+                
+                <!-- Stepper Progress Header -->
+                <div class="bg-slate-50/90 border-b border-slate-200 px-6 py-4">
+                    <div class="flex items-center justify-between relative">
+                        <!-- Background progress track -->
+                        <div class="absolute top-1/2 right-6 left-6 h-1 bg-slate-200 -translate-y-1/2 z-0"></div>
+                        <div id="stepperProgressLine" class="absolute top-1/2 right-6 h-1 bg-andalusia-700 -translate-y-1/2 z-0 transition-all duration-300" style="width: 0%;"></div>
+
+                        <!-- Step 1 -->
+                        <button onclick="goToStep(1)" class="relative z-10 flex flex-col items-center group focus:outline-none">
+                            <div id="stepCircle1" class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-andalusia-700 text-white ring-4 ring-white shadow transition-all">
+                                1
+                            </div>
+                            <span id="stepLabel1" class="text-xs font-bold text-andalusia-800 mt-1.5 bg-slate-50 px-1">بيانات المريض</span>
+                        </button>
+
+                        <!-- Step 2 -->
+                        <button onclick="goToStep(2)" class="relative z-10 flex flex-col items-center group focus:outline-none">
+                            <div id="stepCircle2" class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-slate-200 text-slate-600 ring-4 ring-white transition-all">
+                                2
+                            </div>
+                            <span id="stepLabel2" class="text-xs font-medium text-slate-500 mt-1.5 bg-slate-50 px-1">الباثولوجي والمرفق PDF</span>
+                        </button>
+
+                        <!-- Step 3 -->
+                        <button onclick="goToStep(3)" class="relative z-10 flex flex-col items-center group focus:outline-none">
+                            <div id="stepCircle3" class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-slate-200 text-slate-600 ring-4 ring-white transition-all">
+                                3
+                            </div>
+                            <span id="stepLabel3" class="text-xs font-medium text-slate-500 mt-1.5 bg-slate-50 px-1">قالب الرسالة</span>
+                        </button>
+
+                        <!-- Step 4 -->
+                        <button onclick="goToStep(4)" class="relative z-10 flex flex-col items-center group focus:outline-none">
+                            <div id="stepCircle4" class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-slate-200 text-slate-600 ring-4 ring-white transition-all">
+                                4
+                            </div>
+                            <span id="stepLabel4" class="text-xs font-medium text-slate-500 mt-1.5 bg-slate-50 px-1">الإرسال والمرفقات</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Forms Container -->
+                <div class="p-6">
+
+                    <!-- STEP 1: Patient Data -->
+                    <div id="stepContent1" class="space-y-5 step-transition">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h2 class="text-lg font-bold text-andalusia-navy flex items-center gap-2">
+                                    <i class="fa-solid fa-address-card text-andalusia-600"></i>
+                                    الخطوة الأولى: البيانات الأساسية للمريض
+                                </h2>
+                                <p class="text-xs text-slate-500">أدخل اسم المريض ورقم الملف الطبي (MRN) ورقم هاتف الواتساب</p>
+                            </div>
+                            <span class="text-xs font-bold bg-cyan-100 text-andalusia-800 px-3 py-1 rounded-lg">1 من 4</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <!-- Title / Salutation -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">اللقب</label>
+                                <select id="patientTitle" onchange="updateLivePreview()" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm focus:border-andalusia-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-andalusia-500/20 font-medium">
+                                    <option value="السيد">السيد / أستاذ</option>
+                                    <option value="السيدة">السيدة / أستاذة</option>
+                                    <option value="دكتور">دكتور / د.</option>
+                                    <option value="الحاج">الحاج</option>
+                                    <option value="الحاجة">الحاجة</option>
+                                    <option value="ولي أمر المريض">ولي أمر المريض</option>
+                                </select>
+                            </div>
+
+                            <!-- Patient Name -->
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">اسم المريض بالكامل <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <input type="text" id="patientName" oninput="updateLivePreview()" placeholder="مثال: حسام الدين محمود رضوان" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 pl-10 text-sm focus:border-andalusia-500 focus:outline-none focus:ring-2 focus:ring-andalusia-500/20">
+                                    <i class="fa-regular fa-user absolute left-3.5 top-3.5 text-slate-400"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Phone Number (Default Egypt +20) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">كود الدولة</label>
+                                <select id="countryCode" onchange="updateLivePreview()" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-semibold focus:border-andalusia-500 focus:bg-white focus:outline-none" dir="ltr">
+                                    <option value="20" selected>🇪🇬 +20 (مصر)</option>
+                                    <option value="966">🇸🇦 +966 (السعودية)</option>
+                                    <option value="971">🇦🇪 +971 (الإمارات)</option>
+                                    <option value="965">🇰🇼 +965 (الكويت)</option>
+                                    <option value="974">🇶🇦 +974 (قطر)</option>
+                                    <option value="962">🇯🇴 +962 (الأردن)</option>
+                                </select>
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">رقم هاتف الواتساب للمريض <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <input type="tel" id="patientPhone" oninput="sanitizePhoneInput(); updateLivePreview()" placeholder="01012345678" dir="ltr" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 pl-10 text-left font-mono text-sm focus:border-andalusia-500 focus:outline-none focus:ring-2 focus:ring-andalusia-500/20 font-semibold">
+                                    <i class="fa-brands fa-whatsapp absolute left-3.5 top-3.5 text-emerald-500 text-lg"></i>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-1">يتم التنسيق التلقائي للرقم وحذف الصفر المبتدئ لتجهيز رابط واتساب المباشر فوراً.</p>
+                            </div>
+                        </div>
+
+                        <!-- Medical Record Number (MRN) & Biopsy Sample Number -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">رقم الملف الطبي بالمستشفى (MRN)</label>
+                                <div class="relative">
+                                    <input type="text" id="patientMRN" oninput="updateLivePreview()" value="AND-MRN-94021" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm font-mono focus:border-andalusia-500 focus:outline-none">
+                                    <i class="fa-solid fa-id-card-clip absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">كود عينة الأنسجة (Pathology Sample ID)</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="sampleId" oninput="updateLivePreview()" value="PATH-2026-118" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm font-mono focus:border-andalusia-500 focus:outline-none">
+                                    <button type="button" onclick="generateNewPathologyId()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition" title="توليد كود عينة جديد">
+                                        <i class="fa-solid fa-arrows-rotate"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-100 flex justify-end">
+                            <button type="button" onclick="nextStep(2)" class="bg-andalusia-700 hover:bg-andalusia-800 text-white font-bold py-2.5 px-6 rounded-xl shadow-md shadow-andalusia-700/20 transition flex items-center gap-2 text-sm">
+                                <span>التالي: تفاصيل الباثولوجي ومرفق PDF</span>
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: Pathology Details & PDF Attachment Upload -->
+                    <div id="stepContent2" class="space-y-5 hidden step-transition">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h2 class="text-lg font-bold text-andalusia-navy flex items-center gap-2">
+                                    <i class="fa-solid fa-file-pdf text-rose-600"></i>
+                                    الخطوة الثانية: تفاصيل الباثولوجي وإرفاق ملف الـ PDF
+                                </h2>
+                                <p class="text-xs text-slate-500">تم تعيين فحص الباثولوجي افتراضياً، وارفع التقرير النهائي كملف PDF مباشر</p>
+                            </div>
+                            <span class="text-xs font-bold bg-cyan-100 text-andalusia-800 px-3 py-1 rounded-lg">2 من 4</span>
+                        </div>
+
+                        <!-- Test Type Selection (Default: تحليل باثولوجي) -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">نوع الفحص الطبي (الافتراضي: تحليل باثولوجي) <span class="text-rose-500">*</span></label>
+                            <input type="text" id="testType" oninput="updateLivePreview()" value="تحليل باثولوجي (عينة أنسجة وأورام)" placeholder="حدد نوع التحليل الطبي" class="w-full rounded-xl border border-andalusia-500/70 bg-cyan-50/30 px-3.5 py-2.5 text-sm font-bold text-andalusia-navy focus:border-andalusia-600 focus:outline-none focus:ring-2 focus:ring-andalusia-500/20 mb-2">
+                            
+                            <div class="flex flex-wrap gap-1.5">
+                                <button type="button" onclick="selectQuickTest('تحليل باثولوجي (عينة أنسجة وأورام)')" class="text-xs bg-cyan-100 text-andalusia-900 border border-cyan-300 font-bold px-2.5 py-1 rounded-lg transition hover:bg-cyan-200">
+                                    🔬 تحليل باثولوجي (افتراضي)
+                                </button>
+                                <button type="button" onclick="selectQuickTest('فحص هستوباثولوجي دقيق (Histopathology)')" class="text-xs bg-slate-100 hover:bg-cyan-50 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-lg transition">
+                                    هستوباثولوجي Histopathology
+                                </button>
+                                <button type="button" onclick="selectQuickTest('تحليل خلايا بالإبرة الدقيقة (FNA Cytology)')" class="text-xs bg-slate-100 hover:bg-cyan-50 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-lg transition">
+                                    خلايا بالإبرة FNA
+                                </button>
+                                <button type="button" onclick="selectQuickTest('فحص دلالات الأورام (Tumor Markers)')" class="text-xs bg-slate-100 hover:bg-cyan-50 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-lg transition">
+                                    دلالات الأورام
+                                </button>
+                                <button type="button" onclick="selectQuickTest('مزرعة بكتيرية ومضادات حيوية (Culture & Sensitivity)')" class="text-xs bg-slate-100 hover:bg-cyan-50 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-lg transition">
+                                    مزرعة وحساسية
+                                </button>
+                                <button type="button" onclick="selectQuickTest('صورة دم كاملة وتحاليل دورية (CBC)')" class="text-xs bg-slate-100 hover:bg-cyan-50 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-lg transition">
+                                    تحاليل دم شاملة
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- DRAG & DROP PDF ATTACHMENT BOX -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-paperclip text-andalusia-600"></i>
+                                    مرفق تقرير النتيجة الطبي (PDF File Attachment) <span class="text-rose-500">*</span>
+                                </label>
+                                <span class="text-[11px] text-slate-400">يدعم ملفات PDF حتى 25 ميجابايت</span>
+                            </div>
+
+                            <!-- Upload Container -->
+                            <div id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" onclick="triggerFileInput()" class="border-2 border-dashed border-cyan-300 hover:border-andalusia-600 bg-cyan-50/40 hover:bg-cyan-50/70 rounded-2xl p-4 sm:p-5 text-center cursor-pointer transition-all duration-200">
+                                <input type="file" id="pdfFileInput" accept="application/pdf" onchange="handleFileSelect(event)" class="hidden">
+                                
+                                <div id="uploadPlaceholder">
+                                    <div class="w-12 h-12 bg-white rounded-2xl shadow-sm text-rose-500 flex items-center justify-center text-2xl mx-auto mb-2 border border-slate-100">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                    </div>
+                                    <p class="text-sm font-bold text-slate-800">اسحب وأفلت تقرير الباثولوجي (PDF) هنا أو <span class="text-andalusia-700 underline">تصفح من جهازك</span></p>
+                                    <p class="text-xs text-slate-500 mt-1">يتم تحضير الملف فورياً لربطه مع إشعار واتساب ومشاركته مع المريض</p>
+                                </div>
+
+                                <!-- Uploaded File Info Card (Visible when file is present) -->
+                                <div id="fileInfoBox" class="hidden bg-white rounded-xl p-3.5 border border-cyan-200 text-right flex items-center justify-between shadow-sm">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl shrink-0 border border-rose-100">
+                                            <i class="fa-solid fa-file-pdf"></i>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <h4 class="text-xs font-bold text-slate-800 truncate max-w-xs" id="attachedFileName">Pathology_Report.pdf</h4>
+                                                <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                    <i class="fa-solid fa-circle-check text-emerald-600 text-[9px]"></i> تم الإرفاق
+                                                </span>
+                                            </div>
+                                            <p class="text-[11px] text-slate-500 mt-0.5" id="attachedFileSize">الحجم: 1.2 MB • تقرير طبي رقمي معتمد</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" onclick="previewUploadedPdf(event)" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
+                                            <i class="fa-solid fa-eye"></i> معاينة
+                                        </button>
+                                        <button type="button" onclick="removeAttachedPdf(event)" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold px-2.5 py-1.5 rounded-lg transition" title="حذف المرفق">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Direct Cloud Link Option (Optional fallback or portal link) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-bold text-slate-700">رابط بوابة نتائج مستشفيات أندلسية (الرابط التفاعلي المباشر)</label>
+                                <button type="button" onclick="generateAndalusiaPortalLink()" class="text-[11px] text-andalusia-700 font-bold hover:underline flex items-center gap-1">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> توليد رابط البوابة للمريض
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <input type="url" id="resultLink" oninput="updateLivePreview()" placeholder="https://portal.andalusiahospitals.com/reports/PATH-2026-118.pdf" dir="ltr" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 pl-9 text-left text-xs font-mono focus:border-andalusia-500 focus:outline-none">
+                                <i class="fa-solid fa-link absolute left-3 top-3 text-slate-400 text-xs"></i>
+                            </div>
+                        </div>
+
+                        <!-- Pathologist / Doctor Clinical Notes -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">التوصية الطبية لاستشاري الباثولوجي (تظهر بالرسالة)</label>
+                            <textarea id="doctorNotes" rows="2" oninput="updateLivePreview()" placeholder="مثال: تم فحص العينة بنجاح، يرجى التكرم بحجز موعد المتابعة مع الطبيب المعالج لمناقشة الخطة العلاجية." class="w-full rounded-xl border border-slate-300 p-3 text-sm focus:border-andalusia-500 focus:outline-none"></textarea>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-100 flex justify-between">
+                            <button type="button" onclick="goToStep(1)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-5 rounded-xl transition flex items-center gap-2 text-sm">
+                                <i class="fa-solid fa-arrow-right"></i>
+                                <span>السابق</span>
+                            </button>
+                            <button type="button" onclick="nextStep(3)" class="bg-andalusia-700 hover:bg-andalusia-800 text-white font-bold py-2.5 px-6 rounded-xl shadow-md shadow-andalusia-700/20 transition flex items-center gap-2 text-sm">
+                                <span>التالي: تخصيص الرسالة</span>
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: Andalusia Message Customization -->
+                    <div id="stepContent3" class="space-y-5 hidden step-transition">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h2 class="text-lg font-bold text-andalusia-navy flex items-center gap-2">
+                                    <i class="fa-solid fa-comment-dots text-andalusia-600"></i>
+                                    الخطوة الثالثة: صياغة وقالب رسالة مستشفيات أندلسية
+                                </h2>
+                                <p class="text-xs text-slate-500">اختر القالب الأنسب لتقرير الباثولوجي أو عدّل النص بما يناسب حالة المريض</p>
+                            </div>
+                            <span class="text-xs font-bold bg-cyan-100 text-andalusia-800 px-3 py-1 rounded-lg">3 من 4</span>
+                        </div>
+
+                        <!-- Template Buttons -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">نماذج رسائل قسم الباثولوجي:</label>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" onclick="applyPathologyTemplate('pathology_official')" class="text-xs bg-cyan-50 text-andalusia-900 border border-cyan-300 hover:bg-cyan-100 font-bold px-3 py-2 rounded-xl transition">
+                                    🔬 تقرير باثولوجي رسمي مع المرفق
+                                </button>
+                                <button type="button" onclick="applyPathologyTemplate('consult_urgent')" class="text-xs bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 font-bold px-3 py-2 rounded-xl transition">
+                                    🩺 استشارة ومتابعة مع الطبيب المعالج
+                                </button>
+                                <button type="button" onclick="applyPathologyTemplate('reassure')" class="text-xs bg-emerald-50 text-emerald-900 border border-emerald-300 hover:bg-emerald-100 font-bold px-3 py-2 rounded-xl transition">
+                                    🌿 تقرير مطمئن (عينة حميدة)
+                                </button>
+                                <button type="button" onclick="applyPathologyTemplate('fast')" class="text-xs bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 font-bold px-3 py-2 rounded-xl transition">
+                                    ⚡ إشعار مختصر وسريع
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Editable Message Text Area -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-bold text-slate-700">نص الرسالة المرسلة لواتساب المريض:</label>
+                                <button type="button" onclick="regenerateMessageFromFields()" class="text-xs text-andalusia-700 hover:underline font-semibold flex items-center gap-1">
+                                    <i class="fa-solid fa-arrows-rotate"></i> إعادة التوليد التلقائي
+                                </button>
+                            </div>
+                            <textarea id="finalMessageText" rows="8" oninput="syncManualMessageEdit()" class="w-full rounded-2xl border border-slate-300 p-4 text-sm leading-relaxed focus:border-andalusia-600 focus:outline-none focus:ring-2 focus:ring-andalusia-500/20 font-tajawal shadow-inner"></textarea>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-100 flex justify-between">
+                            <button type="button" onclick="goToStep(2)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-5 rounded-xl transition flex items-center gap-2 text-sm">
+                                <i class="fa-solid fa-arrow-right"></i>
+                                <span>السابق</span>
+                            </button>
+                            <button type="button" onclick="nextStep(4)" class="bg-andalusia-700 hover:bg-andalusia-800 text-white font-bold py-2.5 px-6 rounded-xl shadow-md shadow-andalusia-700/20 transition flex items-center gap-2 text-sm">
+                                <span>التالي: الإرسال والمرفقات</span>
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4: Dispatch & Send Actions -->
+                    <div id="stepContent4" class="space-y-6 hidden step-transition">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h2 class="text-lg font-bold text-andalusia-navy flex items-center gap-2">
+                                    <i class="fa-solid fa-paper-plane text-andalusia-600"></i>
+                                    الخطوة الرابعة: إرسال التقرير والمرفق لواتساب المريض
+                                </h2>
+                                <p class="text-xs text-slate-500">اختر طريقة الإرسال المناسبة (واتساب المباشر مع المرفق أو الربط البرمجي التلقائي)</p>
+                            </div>
+                            <span class="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-lg">جاهز للإرسال الفوري</span>
+                        </div>
+
+                        <!-- Recipient Patient & Biopsy Summary Card -->
+                        <div class="bg-gradient-to-r from-slate-50 to-cyan-50/50 rounded-2xl p-4 border border-cyan-100 flex flex-wrap items-center justify-between gap-4">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-11 h-11 rounded-2xl bg-andalusia-700 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                                    <i class="fa-solid fa-hospital-user"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-andalusia-navy" id="summaryPatientName">حسام الدين محمود رضوان</h4>
+                                    <div class="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                                        <span class="font-mono text-emerald-700 font-bold" dir="ltr" id="summaryPhone">+201012345678</span>
+                                        <span>•</span>
+                                        <span class="font-mono bg-white px-2 py-0.5 rounded border border-slate-200" id="summaryMRN">MRN: AND-MRN-94021</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-left">
+                                <span class="text-xs bg-white text-andalusia-800 border border-cyan-200 px-3 py-1.5 rounded-xl font-bold block" id="summaryTestType">
+                                    تحليل باثولوجي (عينة أنسجة وأورام)
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Attachment Status Banner -->
+                        <div id="summaryAttachmentBanner" class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between text-xs text-amber-900">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-paperclip text-base text-amber-700"></i>
+                                <div>
+                                    <span class="font-bold">المرفق المرفوق بالرسالة:</span>
+                                    <span id="summaryAttachmentName" class="font-mono mr-1">Pathology_Report.pdf</span>
+                                </div>
+                            </div>
+                            <span class="bg-white text-amber-800 text-[10px] font-bold px-2 py-1 rounded border border-amber-200">جاهز للمشاركة</span>
+                        </div>
+
+                        <!-- Two Main Dispatch Channels -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            
+                            <!-- Option 1: Direct WhatsApp Web / App Launch -->
+                            <div class="border-2 border-emerald-500 bg-emerald-50/20 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden shadow-sm">
+                                <span class="absolute top-3 left-3 bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                                    الطريقة الفورية المعتمدة
+                                </span>
+                                <div>
+                                    <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-2xl mb-3 shadow-md shadow-emerald-600/20">
+                                        <i class="fa-brands fa-whatsapp"></i>
+                                    </div>
+                                    <h3 class="font-bold text-base text-slate-900">إرسال عبر تطبيق واتساب / Web</h3>
+                                    <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                        يفتح محادثة واتساب الرسمية لمريض مستشفيات أندلسية مع إدراج نص التقرير بالكامل، وتجهيز ملف الـ PDF لإرساله فوراً.
+                                    </p>
+                                </div>
+                                <div class="mt-5 space-y-2">
+                                    <button type="button" onclick="sendViaDirectWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2 text-sm">
+                                        <i class="fa-brands fa-whatsapp text-lg"></i>
+                                        <span>فتح واتساب وإرسال التقرير الآن</span>
+                                    </button>
+                                    <button type="button" onclick="downloadAttachedReport()" class="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2 px-3 rounded-xl border border-slate-200 transition flex items-center justify-center gap-1.5 text-xs">
+                                        <i class="fa-solid fa-download text-emerald-600"></i>
+                                        <span>تنزيل ملف الـ PDF على الجهاز لسحبه للمحادثة</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Option 2: Automated WhatsApp Cloud API / Webhook -->
+                            <div class="border border-slate-200 bg-white rounded-2xl p-5 flex flex-col justify-between shadow-sm">
+                                <div>
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="w-12 h-12 rounded-2xl bg-andalusia-navy text-cyan-200 flex items-center justify-center text-2xl shadow-sm">
+                                            <i class="fa-solid fa-robot"></i>
+                                        </div>
+                                        <button onclick="openSettingsModal()" class="text-xs text-andalusia-700 font-bold hover:underline flex items-center gap-1">
+                                            <i class="fa-solid fa-gear"></i> إعدادات الربط
+                                        </button>
+                                    </div>
+                                    <h3 class="font-bold text-base text-slate-900">إرسال آلي خلفي (Andalusia Cloud API)</h3>
+                                    <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                        إرسال رسالة الواتساب وملف النتيجة كـ Payload خلفي عبر خوادم المستشفى (n8n / Make / WhatsApp Business Cloud API) بنقرة زر دون فتح نوافذ.
+                                    </p>
+                                </div>
+                                <button type="button" id="btnApiSend" onclick="sendViaWebhookAPI()" class="mt-5 w-full bg-andalusia-navy hover:bg-slate-900 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-andalusia-navy/20 transition flex items-center justify-center gap-2 text-sm">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    <span>إرسال فوري تلقائي عبر الـ API</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Footer Navigation -->
+                        <div class="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                            <button type="button" onclick="goToStep(3)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-5 rounded-xl transition flex items-center gap-2 text-sm">
+                                <i class="fa-solid fa-arrow-right"></i>
+                                <span>تعديل الصياغة</span>
+                            </button>
+
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="copyMessageToClipboard()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl transition flex items-center gap-1.5 text-xs">
+                                    <i class="fa-regular fa-copy"></i>
+                                    <span>نسخ الرسالة</span>
+                                </button>
+                                <button type="button" onclick="resetFormForNewPatient()" class="bg-andalusia-navy hover:bg-slate-900 text-white font-bold py-2.5 px-4 rounded-xl transition flex items-center gap-1.5 text-xs">
+                                    <i class="fa-solid fa-user-plus"></i>
+                                    <span>مريض باثولوجي جديد</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Left Column: Realistic Live WhatsApp Phone Simulator (5 Cols) -->
+            <div class="lg:col-span-5 sticky top-24">
+                <div class="bg-slate-900 rounded-[2.5rem] p-3 shadow-2xl border-4 border-slate-800 max-w-md mx-auto ring-1 ring-slate-700/50">
+                    
+                    <!-- Phone Notch & Speaker -->
+                    <div class="w-28 h-2 bg-slate-800 rounded-full mx-auto mb-2.5"></div>
+
+                    <!-- Simulated Phone Display Screen -->
+                    <div class="rounded-[1.8rem] overflow-hidden bg-white flex flex-col h-[530px]">
+                        
+                        <!-- WhatsApp Top Header - Andalusia Hospitals Verified Account -->
+                        <div class="bg-[#075E54] text-white px-4 py-3 flex items-center justify-between shrink-0 shadow-sm">
+                            <div class="flex items-center gap-2.5 overflow-hidden">
+                                <i class="fa-solid fa-arrow-right text-sm opacity-80 cursor-pointer"></i>
+                                <div class="w-10 h-10 rounded-full bg-white text-andalusia-800 flex items-center justify-center font-bold text-base shrink-0 border border-white/30 shadow-xs">
+                                    <i class="fa-solid fa-hospital"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="flex items-center gap-1">
+                                        <h3 class="text-xs font-bold leading-tight truncate text-white" id="previewHospitalName">مستشفيات أندلسية</h3>
+                                        <i class="fa-solid fa-circle-check text-[#25D366] text-[11px]" title="حساب طبي رسمي موثق"></i>
+                                    </div>
+                                    <p class="text-[10px] text-emerald-100 font-mono" dir="ltr" id="previewPatientPhone">+20 1012345678</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 text-sm opacity-90 text-white">
+                                <i class="fa-solid fa-video"></i>
+                                <i class="fa-solid fa-phone"></i>
+                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                            </div>
+                        </div>
+
+                        <!-- WhatsApp Messages Stream -->
+                        <div class="wa-bg flex-grow p-4 overflow-y-auto flex flex-col space-y-3">
+                            
+                            <!-- WhatsApp Official End-to-End Encryption Notice -->
+                            <div class="bg-[#FEF3C7]/95 text-[#92400E] text-[10px] text-center px-3 py-1.5 rounded-xl shadow-xs mx-auto max-w-[92%] leading-relaxed border border-amber-200/50">
+                                <i class="fa-solid fa-lock text-[9px] ml-1"></i> يتم تشفير التقارير الطبية وسجلات المرضى بتقنية طرف إلى طرف بين مستشفيات أندلسية والمريض.
+                            </div>
+
+                            <!-- Andalusia Hospitals WhatsApp Bubble -->
+                            <div class="bg-[#DCF8C6] rounded-2xl rounded-tr-none p-3 shadow-sm max-w-[94%] self-start border border-emerald-200/70 relative">
+                                
+                                <!-- Attached Pathology PDF Document Card inside WhatsApp -->
+                                <div id="previewPdfBox" class="bg-white rounded-xl p-2.5 mb-2.5 border border-slate-200 shadow-xs flex items-center gap-3 transition">
+                                    <div class="w-10 h-11 bg-rose-500 text-white rounded-lg flex flex-col items-center justify-center shrink-0 font-bold text-[9px] shadow-xs">
+                                        <i class="fa-solid fa-file-pdf text-base"></i>
+                                        <span>PDF</span>
+                                    </div>
+                                    <div class="overflow-hidden flex-grow">
+                                        <p class="text-xs font-bold text-slate-800 truncate" id="previewPdfFileName">Pathology_Biopsy_AND-MRN-94021.pdf</p>
+                                        <div class="flex items-center gap-2 mt-0.5">
+                                            <span class="text-[10px] text-slate-500 font-mono" id="previewPdfSize">1.4 MB</span>
+                                            <span class="text-[9px] bg-cyan-50 text-andalusia-800 font-bold px-1.5 py-0.2 rounded border border-cyan-200">تقرير باثولوجي معتمد</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-slate-400 text-sm pl-1">
+                                        <i class="fa-solid fa-circle-arrow-down text-emerald-600 text-lg"></i>
+                                    </div>
+                                </div>
+
+                                <!-- WhatsApp Message Text Body -->
+                                <div id="whatsappLiveBubble" class="text-xs text-slate-800 whitespace-pre-line leading-relaxed font-tajawal px-0.5">
+                                </div>
+
+                                <!-- Timestamp & Double Blue Ticks -->
+                                <div class="flex items-center justify-end gap-1 mt-1 text-[10px] text-slate-500">
+                                    <span id="previewTime">12:45 م</span>
+                                    <i class="fa-solid fa-check-double text-[#34B7F1]"></i>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- WhatsApp Input Simulator -->
+                        <div class="bg-[#F0F0F0] px-3 py-2 flex items-center gap-2 shrink-0">
+                            <div class="bg-white rounded-full flex-grow px-3.5 py-2 flex items-center justify-between text-slate-400 text-xs">
+                                <span>معاينة رسالة مستشفيات أندلسية...</span>
+                                <i class="fa-solid fa-paperclip text-slate-500"></i>
+                            </div>
+                            <button onclick="sendViaDirectWhatsApp()" title="إرسال الآن إلى واتساب المريض" class="w-10 h-10 rounded-full bg-[#128C7E] hover:bg-[#075E54] text-white flex items-center justify-center shadow-md transition shrink-0">
+                                <i class="fa-solid fa-paper-plane text-xs"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Recent Sent History Table -->
+        <section class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mt-6">
+            <div class="p-5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50/60">
+                <div>
+                    <h2 class="text-base font-bold text-andalusia-navy flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-andalusia-600"></i>
+                        سجل تقارير الباثولوجي المرسلة عبر واتساب
+                    </h2>
+                    <p class="text-xs text-slate-500">سجل توثيقي للرسائل والمرفقات الصادرة للمرضى مع إمكانية إعادة الإرسال الفوري</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <input type="text" id="historySearch" oninput="renderHistoryTable()" placeholder="بحث باسم المريض، MRN، أو الهاتف..." class="rounded-xl border border-slate-300 px-3 py-1.5 pl-8 text-xs focus:border-andalusia-500 focus:outline-none">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+                    </div>
+                    <button onclick="clearHistoryLog()" class="text-xs text-rose-600 hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200 transition font-bold">
+                        <i class="fa-regular fa-trash-can ml-1"></i> مسح السجل
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-sm">
+                    <thead class="bg-slate-50 text-slate-600 text-xs uppercase border-b border-slate-200">
+                        <tr>
+                            <th class="py-3.5 px-4 font-bold">رقم الملف (MRN)</th>
+                            <th class="py-3.5 px-4 font-bold">اسم المريض</th>
+                            <th class="py-3.5 px-4 font-bold">رقم الواتساب</th>
+                            <th class="py-3.5 px-4 font-bold">نوع الفحص</th>
+                            <th class="py-3.5 px-4 font-bold">مرفق النتيجة (PDF)</th>
+                            <th class="py-3.5 px-4 font-bold">طريقة الإرسال</th>
+                            <th class="py-3.5 px-4 font-bold text-center">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="divide-y divide-slate-100 text-xs">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-5 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-andalusia-navy">مستشفيات أندلسية (Andalusia Hospitals)</span>
+                <span>•</span>
+                <span>بوابة التواصل الرقمي لقسم الباثولوجيا والمختبرات الطبية</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-cyan-600"></i> متوافق مع معايير السرية الطبية HIPAA</span>
+                <span class="flex items-center gap-1.5"><i class="fa-brands fa-whatsapp text-emerald-600"></i> WhatsApp Cloud API & Web</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: Pending Patients Queue -->
+    <div id="batchModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-microscope text-andalusia-700"></i>
+                    <h3 class="font-bold text-andalusia-navy text-base">قائمة نتائج الباثولوجي الجاهزة للإرسال</h3>
+                </div>
+                <button onclick="closeBatchModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <p class="text-xs text-slate-500">حدد المريض لتحميل تقرير الباثولوجي المعتمد وإرساله مباشرة عبر واتساب:</p>
+                <div id="pendingQueueList" class="space-y-3">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+            <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button onclick="closeBatchModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold py-2.5 px-5 rounded-xl">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Hospital & API Configuration -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 bg-andalusia-navy text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-cyan-300"></i>
+                    <h3 class="font-bold text-base">إعدادات مستشفيات أندلسية والربط البرمجي</h3>
+                </div>
+                <button onclick="closeSettingsModal()" class="text-slate-300 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">اسم المنشأة الطبية (المعتمد في الرسائل)</label>
+                    <input type="text" id="settingHospitalName" value="مستشفيات أندلسية" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-andalusia-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">الخط الساخن لخدمة عملاء مستشفيات أندلسية</label>
+                    <input type="text" id="settingHospitalPhone" value="16781" dir="ltr" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm font-mono text-left focus:border-andalusia-500 focus:outline-none">
+                </div>
+                <hr class="border-slate-100">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">رابط الـ Webhook للإرسال التلقائي (Make / n8n / WhatsApp Cloud API)</label>
+                    <input type="url" id="settingWebhookUrl" placeholder="https://webhook.andalusiahospitals.com/api/v1/whatsapp-dispatch" dir="ltr" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono text-left focus:border-cyan-500 focus:outline-none">
+                    <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+                        عند الإرسال، سيتم إرسال Payload بصيغة JSON يشمل رقم هاتف المريض، رقم الملف MRN، بيانات ملف الـ PDF المرفق، ورابط البوابة الطبية.
+                    </p>
+                </div>
+            </div>
+            <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+                <button onclick="closeSettingsModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold py-2.5 px-4 rounded-xl">إلغاء</button>
+                <button onclick="saveSettings()" class="bg-andalusia-700 hover:bg-andalusia-800 text-white text-xs font-bold py-2.5 px-5 rounded-xl">حفظ الإعدادات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // --- State Management ---
+        let currentStep = 1;
+        let isManualMessageEdited = false;
+
+        let hospitalSettings = {
+            hospitalName: 'مستشفيات أندلسية',
+            hotline: '16781',
+            webhookUrl: ''
+        };
+
+        // Current Attached PDF Object
+        let attachedPdfFile = {
+            name: 'Pathology_Biopsy_AND-MRN-94021.pdf',
+            size: '1.4 MB',
+            blobUrl: null,
+            isDefaultMock: true
+        };
+
+        // Ready Pathology Patients in Queue
+        let pendingQueue = [
+            {
+                mrn: 'AND-MRN-94021',
+                sampleId: 'PATH-2026-118',
+                title: 'السيد',
+                name: 'حسام الدين محمود رضوان',
+                countryCode: '20',
+                phone: '01012345678',
+                testType: 'تحليل باثولوجي (عينة أنسجة وأورام)',
+                pdfName: 'Biopsy_Histopathology_AND-MRN-94021.pdf',
+                pdfSize: '1.4 MB',
+                portalLink: 'https://portal.andalusiahospitals.com/reports/PATH-2026-118.pdf',
+                notes: 'تم الانتهاء من الفحص المجهري للهستوباثولوجي واعتماده من استشاري الباثولوجي بمستشفيات أندلسية.'
+            },
+            {
+                mrn: 'AND-MRN-93810',
+                sampleId: 'PATH-2026-119',
+                title: 'السيدة',
+                name: 'منى فاروق النجار',
+                countryCode: '20',
+                phone: '01298765432',
+                testType: 'تحليل باثولوجي (عينة غدة درقية بالإبرة FNA)',
+                pdfName: 'Thyroid_FNA_AND-MRN-93810.pdf',
+                pdfSize: '980 KB',
+                portalLink: 'https://portal.andalusiahospitals.com/reports/PATH-2026-119.pdf',
+                notes: 'الخلايا المفحوصة تطمئن، نوصي بالمتابعة الدورية مع استشاري الغدد بمستشفيات أندلسية.'
+            },
+            {
+                mrn: 'AND-MRN-95112',
+                sampleId: 'PATH-2026-120',
+                title: 'أستاذ',
+                name: 'عمر خالد الصاوي',
+                countryCode: '20',
+                phone: '01155443322',
+                testType: 'تحليل باثولوجي (عينة زائدة دودية)',
+                pdfName: 'Appendix_Pathology_AND-MRN-95112.pdf',
+                pdfSize: '1.1 MB',
+                portalLink: 'https://portal.andalusiahospitals.com/reports/PATH-2026-120.pdf',
+                notes: 'النتيجة سالبة وخالية من أي مضاعفات، ونتمنى له سرعة التعافي التام.'
+            }
+        ];
+
+        let sentHistory = [];
+
+        // Initialize on DOM Ready
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            
+            // Set default mock PDF state in UI
+            showAttachedFileCard(attachedPdfFile.name, attachedPdfFile.size);
+
+            // Populate initial demo values
+            document.getElementById('patientName').value = 'حسام الدين محمود رضوان';
+            document.getElementById('patientPhone').value = '01012345678';
+            document.getElementById('testType').value = 'تحليل باثولوجي (عينة أنسجة وأورام)';
+            document.getElementById('doctorNotes').value = 'تم الانتهاء من الفحص المجهري للهستوباثولوجي واعتماده من استشاري الباثولوجي بمستشفيات أندلسية.';
+            document.getElementById('resultLink').value = 'https://portal.andalusiahospitals.com/reports/PATH-2026-118.pdf';
+
+            updateLivePreview();
+            renderHistoryTable();
+            renderPendingQueue();
+        });
+
+        // --- Stepper Navigation ---
+        function goToStep(stepNumber) {
+            // Validation on Step 1
+            if (stepNumber > 1 && currentStep === 1) {
+                const name = document.getElementById('patientName').value.trim();
+                const phone = document.getElementById('patientPhone').value.trim();
+                if (!name || !phone) {
+                    showToast('يرجى كتابة اسم المريض ورقم هاتف الواتساب للمتابعة', 'warning');
+                    return;
+                }
+            }
+
+            currentStep = stepNumber;
+
+            for (let i = 1; i <= 4; i++) {
+                const contentEl = document.getElementById(`stepContent${i}`);
+                const circleEl = document.getElementById(`stepCircle${i}`);
+                const labelEl = document.getElementById(`stepLabel${i}`);
+
+                if (i === stepNumber) {
+                    contentEl.classList.remove('hidden');
+                    circleEl.className = 'w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-andalusia-700 text-white ring-4 ring-cyan-100 shadow transition-all';
+                    circleEl.innerHTML = i;
+                    labelEl.className = 'text-xs font-bold text-andalusia-800 mt-1.5 bg-slate-50 px-1';
+                } else if (i < stepNumber) {
+                    contentEl.classList.add('hidden');
+                    circleEl.className = 'w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-emerald-600 text-white ring-4 ring-white transition-all';
+                    circleEl.innerHTML = '<i class="fa-solid fa-check"></i>';
+                    labelEl.className = 'text-xs font-semibold text-emerald-700 mt-1.5 bg-slate-50 px-1';
+                } else {
+                    contentEl.classList.add('hidden');
+                    circleEl.className = 'w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-slate-200 text-slate-600 ring-4 ring-white transition-all';
+                    circleEl.innerHTML = i;
+                    labelEl.className = 'text-xs font-medium text-slate-500 mt-1.5 bg-slate-50 px-1';
+                }
+            }
+
+            // Progress Line calculation (RTL)
+            const progressPercent = ((stepNumber - 1) / 3) * 85;
+            document.getElementById('stepperProgressLine').style.width = `${progressPercent}%`;
+
+            updateLivePreview();
+        }
+
+        function nextStep(step) {
+            goToStep(step);
+        }
+
+        // --- File Attachment & Drag/Drop Handling ---
+        function triggerFileInput() {
+            document.getElementById('pdfFileInput').click();
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('dropZone').classList.add('border-andalusia-600', 'bg-cyan-100/50');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('dropZone').classList.remove('border-andalusia-600', 'bg-cyan-100/50');
+        }
+
+        function handleFileDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('dropZone').classList.remove('border-andalusia-600', 'bg-cyan-100/50');
+            
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                processUploadedFile(e.dataTransfer.files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files && e.target.files[0]) {
+                processUploadedFile(e.target.files[0]);
+            }
+        }
+
+        function processUploadedFile(file) {
+            if (file.type !== 'application/pdf') {
+                showToast('يرجى اختيار ملف بصيغة PDF فقط لتقارير الباثولوجي', 'warning');
+                return;
+            }
+
+            const formattedSize = formatFileSize(file.size);
+            attachedPdfFile = {
+                name: file.name,
+                size: formattedSize,
+                blobUrl: URL.createObjectURL(file),
+                rawFile: file,
+                isDefaultMock: false
+            };
+
+            showAttachedFileCard(file.name, formattedSize);
+            isManualMessageEdited = false;
+            updateLivePreview();
+            showToast(`تم إرفاق تقرير الباثولوجي: ${file.name} بنجاح!`, 'success');
+        }
+
+        function showAttachedFileCard(name, size) {
+            document.getElementById('uploadPlaceholder').classList.add('hidden');
+            const infoBox = document.getElementById('fileInfoBox');
+            infoBox.classList.remove('hidden');
+            document.getElementById('attachedFileName').textContent = name;
+            document.getElementById('attachedFileSize').textContent = `الحجم: ${size} • تقرير باثولوجي معتمد`;
+
+            document.getElementById('summaryAttachmentBanner').classList.remove('hidden');
+            document.getElementById('summaryAttachmentName').textContent = name;
+            document.getElementById('statPdfStatus').textContent = `مرفق: ${name.substring(0, 15)}...`;
+        }
+
+        function removeAttachedPdf(e) {
+            if (e) e.stopPropagation();
+            attachedPdfFile = null;
+            document.getElementById('pdfFileInput').value = '';
+            document.getElementById('fileInfoBox').classList.add('hidden');
+            document.getElementById('uploadPlaceholder').classList.remove('hidden');
+            document.getElementById('summaryAttachmentBanner').classList.add('hidden');
+            document.getElementById('statPdfStatus').textContent = 'لا يوجد مرفق';
+            isManualMessageEdited = false;
+            updateLivePreview();
+            showToast('تم إزالة ملف الـ PDF المرفق', 'info');
+        }
+
+        function previewUploadedPdf(e) {
+            if (e) e.stopPropagation();
+            if (attachedPdfFile && attachedPdfFile.blobUrl) {
+                window.open(attachedPdfFile.blobUrl, '_blank');
+            } else {
+                const link = document.getElementById('resultLink').value.trim();
+                if (link) window.open(link, '_blank');
+                else showToast('ملف تجريبي للمعاينة، يمكنك فتح الرابط الإلكتروني', 'info');
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // --- Phone Normalization Helper ---
+        function sanitizePhoneInput() {
+            const input = document.getElementById('patientPhone');
+            input.value = input.value.replace(/[^0-9]/g, '');
+        }
+
+        function getFormattedInternationalPhone() {
+            const code = document.getElementById('countryCode').value;
+            let rawPhone = document.getElementById('patientPhone').value.trim().replace(/[^0-9]/g, '');
+            if (rawPhone.startsWith('0')) {
+                rawPhone = rawPhone.substring(1);
+            }
+            return `${code}${rawPhone}`;
+        }
+
+        // --- Andalusia Pathology Message Generator ---
+        function buildAndalusiaPathologyMessage(templateType = 'pathology_official') {
+            const title = document.getElementById('patientTitle').value;
+            const name = document.getElementById('patientName').value.trim() || 'عميلنا العزيز';
+            const mrn = document.getElementById('patientMRN').value.trim();
+            const sampleId = document.getElementById('sampleId').value.trim();
+            const testType = document.getElementById('testType').value.trim() || 'تحليل باثولوجي (عينة أنسجة)';
+            const link = document.getElementById('resultLink').value.trim();
+            const notes = document.getElementById('doctorNotes').value.trim();
+            const pdfAttachmentName = attachedPdfFile ? attachedPdfFile.name : null;
+
+            if (templateType === 'fast') {
+                return `مرحباً ${title}/ *${name}*،\nنحيطكم علماً بصدور تقرير *${testType}* الخاص بكم بمستشفيات أندلسية (ملف رقم: ${mrn}).\n${pdfAttachmentName ? `📎 مرفق لكم ملف التقرير الطبي المعتمد: [${pdfAttachmentName}]\n` : ''}${link ? `رابط العرض والتحميل:\n${link}\n` : ''}\nللعيادات والحجز: ${hospitalSettings.hotline}\nمع أطيب تمنيات مستشفيات أندلسية بالصحة والعافية.`;
+            }
+
+            let message = `السلام عليكم ورحمة الله وبركاته،\n`;
+            message += `تحية طيبة لحضرتك ${title} / *${name}* من *${hospitalSettings.hospitalName}* 🏥\n\n`;
+
+            if (templateType === 'reassure') {
+                message += `يسرنا طمأنتكم بانتهاء فحص عينة الباثولوجي وتأكيد سلامة الفحص المجهري والحمد لله. 🌿\n\n`;
+            } else if (templateType === 'consult_urgent') {
+                message += `نحيطكم علماً باعتماد تقرير الباثولوجي النهائي، ونوصي بحجز موعد استشارة مع الطبيب المعالج لمراجعة النتائج واستكمال الخطة الطبية. 🩺\n\n`;
+            } else {
+                message += `نحيط سيادتكم علماً بصدور واعتماد تقرير قسم الباثولوجيا والأنسجة النهائي (Pathology Report) الخاص بحضرتكم وهو جاهز للاطلاع الآن. 📄\n\n`;
+            }
+
+            message += `🔬 *بيانات التقرير المعتمد:*\n`;
+            message += `• الفحص: *${testType}*\n`;
+            if (mrn) message += `• رقم الملف الطبي (MRN): \`${mrn}\`\n`;
+            if (sampleId) message += `• كود العينة: \`${sampleId}\`\n`;
+
+            if (notes) {
+                message += `\n💡 *توصية استشاري الباثولوجي:*\n${notes}\n`;
+            }
+
+            if (pdfAttachmentName) {
+                message += `\n📎 *تقرير PDF المرفق:* تم إرفاق نسخة معتمدة عالية الجودة من التقرير (${pdfAttachmentName}).\n`;
+            }
+
+            if (link) {
+                message += `\n🌐 *بوابة نتائج المرضى لمستشفيات أندلسية:*\n${link}\n`;
+            }
+
+            message += `\n📞 للاستفسارات الطبية أو حجز موعد المتابعة، يرجى الاتصال بالخط الساخن: *${hospitalSettings.hotline}*\nمع تمنيات أسرة مستشفيات أندلسية لحضرتكم بالشفاء العاجل ودوام العافية 🌸`;
+
+            return message;
+        }
+
+        // --- Live Preview Synchronization ---
+        function updateLivePreview() {
+            const name = document.getElementById('patientName').value.trim() || 'اسم المريض';
+            const intlPhone = getFormattedInternationalPhone();
+            const mrn = document.getElementById('patientMRN').value.trim() || 'AND-MRN';
+            const testType = document.getElementById('testType').value.trim() || 'تحليل باثولوجي';
+
+            // Top Simulator Header
+            document.getElementById('previewHospitalName').textContent = hospitalSettings.hospitalName;
+            document.getElementById('previewPatientPhone').textContent = `+${intlPhone}`;
+
+            // Step 4 Summary
+            document.getElementById('summaryPatientName').textContent = name;
+            document.getElementById('summaryPhone').textContent = `+${intlPhone}`;
+            document.getElementById('summaryMRN').textContent = `MRN: ${mrn}`;
+            document.getElementById('summaryTestType').textContent = testType;
+
+            // WhatsApp Simulator PDF Card
+            const previewPdfBox = document.getElementById('previewPdfBox');
+            if (attachedPdfFile) {
+                previewPdfBox.classList.remove('hidden');
+                document.getElementById('previewPdfFileName').textContent = attachedPdfFile.name;
+                document.getElementById('previewPdfSize').textContent = attachedPdfFile.size;
+            } else {
+                previewPdfBox.classList.add('hidden');
+            }
+
+            // Update Textarea & Chat Bubble
+            if (!isManualMessageEdited) {
+                const message = buildAndalusiaPathologyMessage();
+                document.getElementById('finalMessageText').value = message;
+            }
+
+            const currentText = document.getElementById('finalMessageText').value;
+            document.getElementById('whatsappLiveBubble').textContent = currentText;
+
+            // Current Time (Egypt / Cairo Timezone)
+            const now = new Date();
+            document.getElementById('previewTime').textContent = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function syncManualMessageEdit() {
+            isManualMessageEdited = true;
+            document.getElementById('whatsappLiveBubble').textContent = document.getElementById('finalMessageText').value;
+        }
+
+        function regenerateMessageFromFields() {
+            isManualMessageEdited = false;
+            updateLivePreview();
+            showToast('تمت إعادة توليد الرسالة ببيانات مستشفيات أندلسية الحالية', 'info');
+        }
+
+        function applyPathologyTemplate(type) {
+            isManualMessageEdited = false;
+            const msg = buildAndalusiaPathologyMessage(type);
+            document.getElementById('finalMessageText').value = msg;
+            document.getElementById('whatsappLiveBubble').textContent = msg;
+            showToast('تم تطبيق نموذج الرسالة المختار', 'success');
+        }
+
+        function selectQuickTest(testTitle) {
+            document.getElementById('testType').value = testTitle;
+            isManualMessageEdited = false;
+            updateLivePreview();
+        }
+
+        function generateNewPathologyId() {
+            const randomNum = Math.floor(100 + Math.random() * 900);
+            document.getElementById('sampleId').value = `PATH-2026-${randomNum}`;
+            updateLivePreview();
+        }
+
+        function generateAndalusiaPortalLink() {
+            const mrn = document.getElementById('patientMRN').value.trim() || 'MRN-NEW';
+            document.getElementById('resultLink').value = `https://portal.andalusiahospitals.com/reports/${mrn}_Pathology.pdf`;
+            isManualMessageEdited = false;
+            updateLivePreview();
+            showToast('تم توليد رابط البوابة الإلكترونية لمستشفيات أندلسية', 'info');
+        }
+
+        // --- Sending Actions ---
+        function sendViaDirectWhatsApp() {
+            const name = document.getElementById('patientName').value.trim();
+            const rawPhone = document.getElementById('patientPhone').value.trim();
+
+            if (!name || !rawPhone) {
+                showToast('برجاء إدخال اسم المريض ورقم الواتساب أولاً', 'warning');
+                goToStep(1);
+                return;
+            }
+
+            const intlPhone = getFormattedInternationalPhone();
+            const message = document.getElementById('finalMessageText').value;
+            const encoded = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${intlPhone}?text=${encoded}`;
+
+            addRecordToHistory({
+                mrn: document.getElementById('patientMRN').value.trim() || '-',
+                patientName: name,
+                phone: `+${intlPhone}`,
+                testType: document.getElementById('testType').value.trim(),
+                pdfName: attachedPdfFile ? attachedPdfFile.name : 'بدون ملف مرفق',
+                method: 'واتساب ويب / مباشر',
+                message: message
+            });
+
+            window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+            showToast(`تم فتح واتساب لإرسال تقرير الباثولوجي إلى ${name}`, 'success');
+        }
+
+        function downloadAttachedReport() {
+            if (attachedPdfFile && attachedPdfFile.blobUrl) {
+                const a = document.createElement('a');
+                a.href = attachedPdfFile.blobUrl;
+                a.download = attachedPdfFile.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast(`تم تنزيل ${attachedPdfFile.name} لتسهيل إرفاقه بالمحادثة`, 'info');
+            } else {
+                showToast('الملف الافتراضي مهيأ للمعاينة، يمكنك رفع ملف PDF حقيقي لتنزيله', 'info');
+            }
+        }
+
+        async function sendViaWebhookAPI() {
+            const name = document.getElementById('patientName').value.trim();
+            const rawPhone = document.getElementById('patientPhone').value.trim();
+
+            if (!name || !rawPhone) {
+                showToast('برجاء إدخال بيانات المريض أولاً', 'warning');
+                goToStep(1);
+                return;
+            }
+
+            const btn = document.getElementById('btnApiSend');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري الإرسال عبر API مستشفيات أندلسية...</span>`;
+
+            const intlPhone = getFormattedInternationalPhone();
+            const payload = {
+                hospital: hospitalSettings.hospitalName,
+                mrn: document.getElementById('patientMRN').value.trim(),
+                sampleId: document.getElementById('sampleId').value.trim(),
+                patientName: name,
+                phone: intlPhone,
+                testType: document.getElementById('testType').value.trim(),
+                attachedPdf: attachedPdfFile ? { name: attachedPdfFile.name, size: attachedPdfFile.size } : null,
+                portalLink: document.getElementById('resultLink').value.trim(),
+                message: document.getElementById('finalMessageText').value,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                if (hospitalSettings.webhookUrl) {
+                    await fetch(hospitalSettings.webhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    // Simulated API Network Response
+                    await new Promise(resolve => setTimeout(resolve, 850));
+                }
+
+                addRecordToHistory({
+                    mrn: payload.mrn,
+                    patientName: name,
+                    phone: `+${intlPhone}`,
+                    testType: payload.testType,
+                    pdfName: attachedPdfFile ? attachedPdfFile.name : 'رابط إلكتروني',
+                    method: hospitalSettings.webhookUrl ? 'Andalusia Webhook API' : 'Cloud API (محاكاة)',
+                    message: payload.message
+                });
+
+                showToast(`تم إرسال تقرير الباثولوجي آلياً إلى واتساب ${name} بنجاح!`, 'success');
+            } catch (err) {
+                showToast('تم حفظ العملية بالسجل، تعذر الوصول لرابط الـ Webhook الخارجي.', 'warning');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        function copyMessageToClipboard() {
+            const text = document.getElementById('finalMessageText');
+            text.select();
+            document.execCommand('copy');
+            showToast('تم نسخ نص تقرير مستشفيات أندلسية إلى الحافظة', 'info');
+        }
+
+        function resetFormForNewPatient() {
+            document.getElementById('patientName').value = '';
+            document.getElementById('patientPhone').value = '';
+            document.getElementById('doctorNotes').value = '';
+            document.getElementById('patientMRN').value = `AND-MRN-${Math.floor(10000 + Math.random() * 90000)}`;
+            generateNewPathologyId();
+            document.getElementById('testType').value = 'تحليل باثولوجي (عينة أنسجة وأورام)';
+            
+            // Set fresh mock PDF attachment for the new patient
+            attachedPdfFile = {
+                name: `Pathology_Report_${document.getElementById('patientMRN').value}.pdf`,
+                size: '1.2 MB',
+                blobUrl: null,
+                isDefaultMock: true
+            };
+            showAttachedFileCard(attachedPdfFile.name, attachedPdfFile.size);
+
+            generateAndalusiaPortalLink();
+            isManualMessageEdited = false;
+            goToStep(1);
+            showToast('تم تجهيز النموذج لحالة باثولوجي جديدة', 'info');
+        }
+
+        function fillPathologyDemo() {
+            document.getElementById('patientTitle').value = 'السيد';
+            document.getElementById('patientName').value = 'مروان عبد العزيز سالم';
+            document.getElementById('countryCode').value = '20';
+            document.getElementById('patientPhone').value = '01067891234';
+            document.getElementById('patientMRN').value = 'AND-MRN-96204';
+            document.getElementById('sampleId').value = 'PATH-2026-891';
+            document.getElementById('testType').value = 'تحليل باثولوجي (عينة أنسجة وأورام)';
+            document.getElementById('doctorNotes').value = 'عينة الغشاء المخاطي سليمة ولا توجد أي دلائل على نشاط خبيث. يرجى المتابعة العادية بعد 6 أشهر.';
+            
+            attachedPdfFile = {
+                name: 'Biopsy_Histology_AND-MRN-96204.pdf',
+                size: '1.8 MB',
+                blobUrl: null,
+                isDefaultMock: true
+            };
+            showAttachedFileCard(attachedPdfFile.name, attachedPdfFile.size);
+            generateAndalusiaPortalLink();
+
+            isManualMessageEdited = false;
+            updateLivePreview();
+            showToast('تم ملء عينة باثولوجي نموذجية لمستشفيات أندلسية', 'info');
+        }
+
+        // --- History Management ---
+        function addRecordToHistory(item) {
+            const newRecord = {
+                id: Date.now(),
+                mrn: item.mrn,
+                patientName: item.patientName,
+                phone: item.phone,
+                testType: item.testType,
+                pdfName: item.pdfName,
+                method: item.method,
+                message: item.message,
+                time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+            };
+
+            sentHistory.unshift(newRecord);
+            saveToStorage();
+            renderHistoryTable();
+        }
+
+        function renderHistoryTable() {
+            const tbody = document.getElementById('historyTableBody');
+            const search = document.getElementById('historySearch').value.trim().toLowerCase();
+            document.getElementById('statTotalSent').textContent = sentHistory.length;
+
+            const filtered = sentHistory.filter(i =>
+                i.patientName.toLowerCase().includes(search) ||
+                i.mrn.toLowerCase().includes(search) ||
+                i.phone.includes(search)
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-slate-400">
+                            <i class="fa-solid fa-microscope text-3xl mb-2 block opacity-30"></i>
+                            لا توجد تقارير باثولوجي مسجلة بالسجل حتى الآن.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(row => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="py-3 px-4 font-mono font-bold text-andalusia-navy">${row.mrn}</td>
+                    <td class="py-3 px-4 font-bold text-slate-800">${row.patientName}</td>
+                    <td class="py-3 px-4 font-mono text-emerald-700" dir="ltr">${row.phone}</td>
+                    <td class="py-3 px-4 text-slate-700 font-medium">${row.testType}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center gap-1 text-[11px] font-mono text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                            <i class="fa-solid fa-file-pdf"></i> ${row.pdfName}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full ${row.method.includes('API') ? 'bg-cyan-50 text-andalusia-800 border border-cyan-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'}">
+                            ${row.method}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="resendHistoryRecord(${row.id})" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+                            <i class="fa-brands fa-whatsapp"></i> إعادة إرسال
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function resendHistoryRecord(id) {
+            const item = sentHistory.find(r => r.id === id);
+            if (!item) return;
+            const phone = item.phone.replace('+', '');
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(item.message)}`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+            showToast(`تم فتح واتساب لإعادة إرسال النتيجة إلى ${item.patientName}`, 'success');
+        }
+
+        function clearHistoryLog() {
+            sentHistory = [];
+            saveToStorage();
+            renderHistoryTable();
+            showToast('تم مسح سجل الرسائل المرسلة بالكامل', 'info');
+        }
+
+        // --- Pending Queue Loading ---
+        function renderPendingQueue() {
+            const list = document.getElementById('pendingQueueList');
+            document.getElementById('queueCountBadge').textContent = pendingQueue.length;
+            document.getElementById('statPendingCount').textContent = `${pendingQueue.length} حالات`;
+
+            if (pendingQueue.length === 0) {
+                list.innerHTML = `<p class="text-center py-6 text-slate-400 text-xs">تم إرسال كافة تقارير الباثولوجي المجدولة بنجاح 🎉</p>`;
+                return;
+            }
+
+            list.innerHTML = pendingQueue.map((item, idx) => `
+                <div class="p-4 rounded-2xl border border-slate-200 hover:border-andalusia-500 bg-white flex flex-wrap items-center justify-between gap-3 transition">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono font-bold bg-cyan-50 text-andalusia-800 border border-cyan-200 px-2 py-0.5 rounded">${item.mrn}</span>
+                            <h4 class="font-bold text-sm text-slate-800">${item.title}/ ${item.name}</h4>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1 font-semibold">${item.testType}</p>
+                        <div class="flex items-center gap-3 text-[11px] text-slate-400 mt-0.5">
+                            <span class="font-mono text-emerald-700 font-semibold" dir="ltr">+${item.countryCode} ${item.phone}</span>
+                            <span>•</span>
+                            <span class="text-rose-600 font-mono"><i class="fa-solid fa-file-pdf"></i> ${item.pdfName} (${item.pdfSize})</span>
+                        </div>
+                    </div>
+                    <button onclick="loadQueuePatient(${idx})" class="bg-andalusia-700 hover:bg-andalusia-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                        <span>تحميل التقرير وتجهيز الواتساب</span>
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function loadQueuePatient(idx) {
+            const item = pendingQueue[idx];
+            if (!item) return;
+
+            document.getElementById('patientTitle').value = item.title;
+            document.getElementById('patientName').value = item.name;
+            document.getElementById('countryCode').value = item.countryCode;
+            document.getElementById('patientPhone').value = item.phone;
+            document.getElementById('patientMRN').value = item.mrn;
+            document.getElementById('sampleId').value = item.sampleId;
+            document.getElementById('testType').value = item.testType;
+            document.getElementById('resultLink').value = item.portalLink;
+            document.getElementById('doctorNotes').value = item.notes;
+
+            attachedPdfFile = {
+                name: item.pdfName,
+                size: item.pdfSize,
+                blobUrl: null,
+                isDefaultMock: true
+            };
+            showAttachedFileCard(item.pdfName, item.pdfSize);
+
+            pendingQueue.splice(idx, 1);
+            renderPendingQueue();
+            closeBatchModal();
+
+            isManualMessageEdited = false;
+            goToStep(4);
+            showToast(`تم تجهيز تقرير الباثولوجي للمريض (${item.name})، جاهز للإرسال!`, 'success');
+        }
+
+        function openBatchModal() {
+            const m = document.getElementById('batchModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeBatchModal() {
+            const m = document.getElementById('batchModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        // --- Settings Modal ---
+        function openSettingsModal() {
+            document.getElementById('settingHospitalName').value = hospitalSettings.hospitalName;
+            document.getElementById('settingHospitalPhone').value = hospitalSettings.hotline;
+            document.getElementById('settingWebhookUrl').value = hospitalSettings.webhookUrl;
+
+            const m = document.getElementById('settingsModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeSettingsModal() {
+            const m = document.getElementById('settingsModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function saveSettings() {
+            hospitalSettings.hospitalName = document.getElementById('settingHospitalName').value.trim() || 'مستشفيات أندلسية';
+            hospitalSettings.hotline = document.getElementById('settingHospitalPhone').value.trim() || '16781';
+            hospitalSettings.webhookUrl = document.getElementById('settingWebhookUrl').value.trim();
+
+            document.getElementById('headerHospitalName').textContent = hospitalSettings.hospitalName;
+            document.getElementById('previewHospitalName').textContent = hospitalSettings.hospitalName;
+
+            saveToStorage();
+            isManualMessageEdited = false;
+            updateLivePreview();
+            closeSettingsModal();
+            showToast('تم حفظ إعدادات مستشفيات أندلسية بنجاح', 'success');
+        }
+
+        // --- Storage Helpers ---
+        function saveToStorage() {
+            try {
+                localStorage.setItem('andalusia_settings', JSON.stringify(hospitalSettings));
+                localStorage.setItem('andalusia_history', JSON.stringify(sentHistory));
+            } catch (e) {}
+        }
+
+        function loadFromStorage() {
+            try {
+                const s = localStorage.getItem('andalusia_settings');
+                if (s) {
+                    hospitalSettings = JSON.parse(s);
+                    document.getElementById('headerHospitalName').textContent = hospitalSettings.hospitalName;
+                    document.getElementById('previewHospitalName').textContent = hospitalSettings.hospitalName;
+                }
+                const h = localStorage.getItem('andalusia_history');
+                if (h) {
+                    sentHistory = JSON.parse(h);
+                } else {
+                    sentHistory = [
+                        {
+                            id: 2001,
+                            mrn: 'AND-MRN-92140',
+                            patientName: 'طارق عبد الله فؤاد',
+                            phone: '+201009988776',
+                            testType: 'تحليل باثولوجي (عينة أنسجة وأورام)',
+                            pdfName: 'Pathology_Report_AND-MRN-92140.pdf',
+                            method: 'واتساب ويب / مباشر',
+                            message: 'نحيط سيادتكم علماً بصدور واعتماد تقرير قسم الباثولوجيا والأنسجة النهائي بمستشفيات أندلسية.',
+                            time: '10:15 ص'
+                        }
+                    ];
+                }
+            } catch (e) {
+                sentHistory = [];
+            }
+        }
+
+        // --- Notifications Toast ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            let colors = 'bg-slate-800 text-white border-slate-700';
+            let icon = 'fa-circle-info text-cyan-400';
+
+            if (type === 'success') {
+                colors = 'bg-emerald-950 text-white border-emerald-700';
+                icon = 'fa-circle-check text-emerald-400';
+            } else if (type === 'warning') {
+                colors = 'bg-amber-950 text-white border-amber-700';
+                icon = 'fa-triangle-exclamation text-amber-400';
+            }
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-xs font-bold transition-all duration-300 ${colors}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-base shrink-0"></i>
+                <span class="leading-relaxed">${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+    </script>
+</body>
+</html>
